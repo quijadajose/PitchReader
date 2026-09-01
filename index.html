@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PitchReader Pro | Visualizador de Entonación y Escalas Intermedias</title>
+  <meta name="description" content="Visualizador de tono y afinador en tiempo real con soporte completo para notas intermedias, semitonos y escalas musicales.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header / Barra Superior de Controles -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+      </div>
+      <!-- <div>
+        <h1>PitchReader <span style="font-weight: 400; font-size: 0.9rem; color: var(--accent-cyan);">Pro</span></h1>
+      </div>
+      <span class="badge-scale" id="badgeScale">Cromática</span> -->
+    </div>
+
+    <div class="controls-bar">
+      <!-- Selector de Tónica y Escala -->
+      <div class="control-group">
+        <label for="selectRoot">Tónica:</label>
+        <select id="selectRoot"></select>
+        
+        <label for="selectScale">Escala:</label>
+        <select id="selectScale"></select>
+      </div>
+
+      <!-- Selector de Rango y Notación -->
+      <div class="control-group">
+        <label for="selectNotation">Notación:</label>
+        <select id="selectNotation">
+          <option value="sharp">Sostenidos (#)</option>
+          <option value="flat">Bemoles (b)</option>
+          <option value="solfege">Solfeo (Do-Re-Mi)</option>
+        </select>
+
+        <label for="selectRange">Rango:</label>
+        <select id="selectRange">
+          <option value="48-72">Voz Normal (C3 - C5)</option>
+          <option value="40-76">Voz Amplia (E2 - E5)</option>
+          <option value="40-84">Guitarra (E2 - C6)</option>
+          <option value="36-84">Bajo / Agudos (C2 - C6)</option>
+          <option value="24-96">Rango Completo (C1 - C7)</option>
+        </select>
+      </div>
+
+      <!-- Ajustes de Sensibilidad y Velocidad -->
+      <div class="control-group">
+        <label for="inputSensitivity">Sensibilidad:</label>
+        <input type="range" id="inputSensitivity" min="0" max="1" step="0.05" value="0.75" style="width: 70px;">
+
+        <label for="inputSpeed">Velocidad:</label>
+        <input type="range" id="inputSpeed" min="1" max="6" step="0.5" value="2.5" style="width: 60px;">
+      </div>
+
+      <!-- Botón de Micrófono Principal -->
+      <button class="btn-primary" id="btnToggleMic">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+        Iniciar Micrófono
+      </button>
+
+      <!-- Botones de Acción Secundaria -->
+      <button class="btn-icon" id="btnPause" title="Pausar desplazamiento">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="4" width="4" height="16"/>
+          <rect x="14" y="4" width="4" height="16"/>
+        </svg>
+        Pausar
+      </button>
+
+      <button class="btn-icon" id="btnClear" title="Limpiar gráfico">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+        Limpiar
+      </button>
+    </div>
+  </header>
+
+  <!-- Área de Trabajo Principal: Canvas y HUD flotante -->
+  <main class="workspace-container">
+    <!-- HUD flotante con información de nota en tiempo real -->
+    <div class="pitch-hud">
+      <div class="note-badge">
+        <div class="note-letter" id="hudNote">--</div>
+        <div class="note-octave" id="hudOctave"></div>
+      </div>
+      <div class="pitch-details">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <span class="freq-readout" id="hudFreq">0.0 Hz</span>
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-dim);" id="hudCents">+0¢</span>
+        </div>
+        <!-- Barra de Cents (-50 a +50) -->
+        <div class="cents-meter-container">
+          <div class="cents-track">
+            <div class="cents-center-line"></div>
+            <div class="cents-bar" id="centsBar"></div>
+          </div>
+          <div class="cents-labels">
+            <span>-50¢</span>
+            <span>0</span>
+            <span>+50¢</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenedor del Canvas Piano Roll -->
+    <div class="canvas-wrapper">
+      <canvas id="pitchCanvas"></canvas>
+    </div>
+  </main>
+
+  <!-- Barra Inferior de Estado y Leyenda -->
+  <footer class="bottom-bar">
+    <div class="status-indicator">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Micrófono inactivo</span>
+    </div>
+
+    <div class="mic-level-container">
+      <span>Nivel Mic:</span>
+      <div class="volume-meter">
+        <div class="volume-level" id="micVolumeLevel"></div>
+      </div>
+    </div>
+
+    <div class="legend-items">
+      <div class="legend-item">
+        <div class="legend-box scale"></div>
+        <span>Nota en Escala</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-box accidental"></div>
+        <span>Nota Intermedia (Semitono)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-box natural"></div>
+        <span>Nota Natural</span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
